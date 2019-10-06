@@ -1,3 +1,31 @@
+@atika13.
+
+No need for a tuto it is straightforward. (Also there is a lot of doc , a little bit out of date, on the net).
+
+- enable SPI
+sudo raspi-config , 5 Interfacing option, P4 SPI, Yes, finish
+
+You could test if the SPI is enabled using this command 
+ls -l /dev/spi*
+if /dev/spidev0.0 and /dev/spidev0.1 are displayed then you are in business.
+
+- clone the github 
+git clone https://github.com/danjperron/MFRC522-python
+
+- power off the PI to make wrie connection 
+
+- connect the RC-522 card like the readme description. Don't connect the reset pin. 
+
+- power up the PI
+
+- run the command
+
+cd MFRC522-python
+python3 Read.py
+
+
+Now put the RFID card near the reader and it should output the serial Id.
+
 MFRC522-python
 ==============
 - Update Oct 2018  
