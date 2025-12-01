@@ -26,8 +26,9 @@
 #    If not, see <http://www.gnu.org/licenses/>.
 #
 
-import MFRC522
+from MFRC522 import MFRC522
 import signal
+import time
 
 continue_reading = True
 
@@ -50,8 +51,43 @@ def end_read(signal, frame):
 # Hook the SIGINT
 signal.signal(signal.SIGINT, end_read)
 
-# Create an object of the class MFRC522
-MIFAREReader = MFRC522.MFRC522()
+
+# create a class contaings the RFID and only report when something is new
+
+class myRFIDReader(MFRC522):
+    def __init__(self,bus=0,dev=0):
+        super().__init__(bus=bus,dev=dev)
+        self.key = None
+        self.keyIn = False
+        self.keyValidCount=0;
+
+    def Read(self):
+        status, TagType = self.MFRC522_Request(super().PICC_REQIDL)
+        if status == self.MI_OK:
+            status, uid = self.MFRC522_SelectTagSN()
+            if status == self.MI_OK:
+                self.keyIn=True
+                self.keyValidCount=2
+                if self.key != uid:
+                   self.key = uid
+                   if uid is None:
+                      return False
+                   return True
+        else:
+            if self.keyIn:
+                if self.keyValidCount>0:
+                   self.keyValidCount= self.keyValidCount - 1
+                else:
+                   self.keyIn=False
+                   self.key=None
+        return False
+
+
+
+reader1 = myRFIDReader(bus=0,dev=0)
+reader2 = myRFIDReader(bus=0,dev=1)
+reader3 = myRFIDReader(bus=1,dev=0)
+
 
 # Welcome message
 print("Welcome to the MFRC522 data read example")
@@ -61,18 +97,12 @@ print("Press Ctrl-C to stop.")
 # If one is near it will get the UID and authenticate
 while continue_reading:
 
-    # Scan for cards
-    (status, TagType) = MIFAREReader.MFRC522_Request(MIFAREReader.PICC_REQIDL)
+    if reader1.Read():
+       print("Reader1 : %s" %uidToString(reader1.key))
+    if reader2.Read():
+       print("Reader2 : %s" %uidToString(reader2.key))
+    if reader3.Read():
+       print("Reader3 : %s" %uidToString(reader3.key))
 
-    # If a card is found
-    if status == MIFAREReader.MI_OK:
-        print ("Card detected")
-
-        # Get the UID of the card
-        (status, uid) = MIFAREReader.MFRC522_SelectTagSN()
-        # If we have the UID, continue
-        if status == MIFAREReader.MI_OK:
-            print("Card read UID: %s" % uidToString(uid))
-        else:
-            print("Authentication error")
+    time.sleep(0.010)
 
